@@ -16,7 +16,6 @@ class Meteor(pygame.sprite.Sprite):
         self.rotation_speed = randint(30, 70)
         self.rotation = 0
 
-
     def update(self, key_press, dt):
         self.rect.center += self.direction*self.speed*dt
         if self.rect.top > WINDOW_HEIGHT:
@@ -24,7 +23,7 @@ class Meteor(pygame.sprite.Sprite):
         # Rotate the meteors
         self.rotation += self.rotation_speed*dt
         self.image = pygame.transform.rotozoom(self.original_surf, self.rotation, 1)
-        # We have to update the rect as well as the image to avoid weird shaking off the image
+        # We have to update the rect as well as the image to avoid weird shaking of the image
         self.rect = self.image.get_rect(center = self.rect.center)
         
 

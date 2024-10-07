@@ -6,7 +6,6 @@ WINDOW_WIDTH, WINDOW_HEIGHT = 1280, 720
 class Laser(pygame.sprite.Sprite):
     def __init__(self, groups, img, pos):
         super().__init__(groups)
-        # Import laser image
         self.image = img
         self.rect = self.image.get_frect(midbottom = pos)
         self.speed = 400

@@ -49,14 +49,19 @@ for i in range (20):
     Stars(all_sprites, star_img)
 # Create Player Object
 player = Player(all_sprites, laser_sprites, laser_image, laser_sound)
+hp_rect = pygame.FRect(WINDOW_WIDTH/2-20, WINDOW_HEIGHT-20, player.get_health(), 10)
+hp_rect.move_to(center=(WINDOW_WIDTH/2-20, WINDOW_HEIGHT-20))
+score = 0
 
 # Custom Meteor event to spawn meteors
 meteor_spawn = pygame.event.custom_type()
 # The first arg is what you want to trigger when the timer goes off, 2nd is the duration time in milliseconds (500=1/2 of 1 second)
 pygame.time.set_timer(meteor_spawn, 500)
-death_event = pygame.event.custom_type()
+death_event = pygame.event.Event(pygame.USEREVENT)
 
-def laser_collision():
+def collisions():
+    global score
+    # Laser Collisions
     for laser in laser_sprites:
         # 1st arg is a single sprite, 2nd is a group of sprites, 3rd is boolean to kill the sprite from the group that collided. Returns a list of collided sprites, letting you access them still for the rest of the frame
         collided_meteors = pygame.sprite.spritecollide(laser, meteor_sprites, True, pygame.sprite.collide_mask)
@@ -64,22 +69,31 @@ def laser_collision():
             pygame.sprite.spritecollide(meteor, laser_sprites, True, pygame.sprite.collide_mask)
             AnimatedExplosion(all_sprites, explosion_surfaces, laser.rect.midtop)
             explosion_sound.play()
-
-def ship_collision():
-    ship_damage = pygame.sprite.spritecollide(player, meteor_sprites, False, pygame.sprite.collide_mask)
-    for items in ship_damage:
+            score += 1
+    # Ship collisions
+    if player.get_health() == 0:
+        pygame.event.post(death_event)
         player.set_health(-10)
-        damage_sound.play()
-    if player.get_health() <= 0:
-        death_event()
+    elif player.get_health() > 0:
+        ship_damage = pygame.sprite.spritecollide(player, meteor_sprites, True, pygame.sprite.collide_mask)
+        for meteor in ship_damage:
+            AnimatedExplosion(all_sprites, explosion_surfaces, meteor.rect.center)
+            damage_sound.play()
+            player.set_health(-10)
     
-
 def display_score(display_surface):
-    current_time = int(pygame.time.get_ticks()/1000)
-    text_surf = font.render(str(current_time), True, 'green')
-    text_rect = text_surf.get_frect(midbottom= (WINDOW_WIDTH/2, WINDOW_HEIGHT-40))
+    text_surf = font.render(str(score), True, 'orange')
+    text_rect = text_surf.get_frect(midbottom= (WINDOW_WIDTH/2, WINDOW_HEIGHT-60))
     display_surface.blit(text_surf,text_rect)
     pygame.draw.rect(display_surface, 'black', text_rect.inflate(10, 10).move(0,-5), 3, 5)
+
+def display_hp(display_surface):
+    current_hp = player.get_health()
+    text_surf = font.render('HP:', True, 'green')
+    text_rect = text_surf.get_frect(center= (WINDOW_WIDTH/2-60, WINDOW_HEIGHT-20))
+    display_surface.blit(text_surf,text_rect)
+    hp_rect.update((hp_rect.topleft), (current_hp, 10))
+    pygame.draw.rect(display_surface, 'green', hp_rect)
 
 while active:
     # Delta time
@@ -90,15 +104,15 @@ while active:
             active = False
         if event.type == meteor_spawn:
             Meteor((meteor_sprites, all_sprites), meteor_surface)
-        if event.type == death_event:
+        if event.type == death_event.type:
             AnimatedExplosion(all_sprites,explosion_surfaces,player.rect.center)
             explosion_sound.play()
-            active = False
+            player.death()
+            pygame.time.set_timer(pygame.QUIT, 200) 
 
     key_press = pygame.key.get_pressed()
     all_sprites.update(key_press, dt)
-    laser_collision()
-    ship_collision()
+    collisions()
 
     # Check if music needs to be looped
     if not background_music.get_busy():
@@ -107,6 +121,7 @@ while active:
     # Draw the game
     display_surface.fill('lightpink3')
     display_score(display_surface)
+    display_hp(display_surface)
     all_sprites.draw(display_surface)
     pygame.display.update()
 

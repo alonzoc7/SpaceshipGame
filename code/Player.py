@@ -30,6 +30,8 @@ class Player(pygame.sprite.Sprite):
                 self.on_cooldown = False
     
     def update(self, key_press, dt):
+        if self.health == 0:
+            self.kill()
         # Capture Spaceship Movement
         if(key_press[pygame.K_w] or key_press[pygame.K_UP]):
             self.direction.y = -1
@@ -55,10 +57,13 @@ class Player(pygame.sprite.Sprite):
             self.laser_shoot_time = pygame.time.get_ticks()
             self.on_cooldown = True 
             self.laser_sound.play()
-        self.laser_timer()  
+        self.laser_timer()      
 
     def set_health(self, val):
         self.health += val
 
     def get_health(self):
         return self.health
+    
+    def death(self):
+        self.kill()
